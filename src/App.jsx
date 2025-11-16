@@ -21,7 +21,7 @@ function App() {
         <Route path='/' element={<Home/>}></Route>
         <Route path='/wishlist' element={<Wishlist/>}></Route>
         <Route path='/cart' element={<Cart/>}></Route>
-        <Route path='/view' element={<View/>}></Route>
+        <Route path='/products/:id/view' element={<View/>}></Route>
         <Route path='/*' element={<PageNF/>}></Route>
       </Routes>
       <Footer/>
