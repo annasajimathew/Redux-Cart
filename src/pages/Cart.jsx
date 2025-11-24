@@ -1,15 +1,55 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Header from '../components/Header'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTrash } from '@fortawesome/free-solid-svg-icons'
-Header
+import { useDispatch, useSelector } from 'react-redux'
+import { Link, useNavigate } from 'react-router-dom'
+import { decrementCartItem, emptyCart, incrementCartItem, removeCartItem } from '../redux/slices/cartSlice'
+import Swal from 'sweetalert2'
+
+
 
 function Cart() {
+  const userCart = useSelector(state =>state.cartReducer)
+  const [sum, setSum] = useState(0)
+
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
+
+  //total price
+  useEffect(()=>{
+    setSum(userCart?.reduce((acc,current)=>acc+current.totalPrice,0))
+  },[userCart])
+
+  const handleDecrementCart = (product)=>{
+    if(product.quantity>1){
+      //decrement
+      dispatch(decrementCartItem(product))
+    }else{
+      dispatch(removeCartItem(product.id))
+    }
+  }
+
+  const checkout = ()=>{
+    dispatch(emptyCart()) // to empty cart after checkout
+      navigate('/') // to redirect to home page
+    Swal.fire({
+      title: 'Order Placed Successfully!',
+      text: "Thank you For Purchasing With Us",
+      icon: 'success',
+      confirmButtonText: 'ok'
+
+    })
+  }
+
+
   return (
     <>
     <Header/>
     <div className="container py-5">
-      <div className="my-5">
+      {
+        userCart?.length>0?
+        <div className="my-5">
         <h1 className='text-danger fw-bold'>Cart Summary</h1>
         <div className="row mt-4">
           <div className="col-md-8 border rounded p-4">
@@ -25,37 +65,57 @@ function Cart() {
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>1</td>
-                  <td>title</td>
-                  <td><img width={'50px'} height={'50px'} src="https://m.media-amazon.com/images/I/61HLmRuVZvL.jpg" alt="" /></td>
+                {
+                  userCart?.map((product,index)=>(
+                    <tr>
+                  <td>{index+1}</td>
+                  <td>{product?.title}</td>
+                  <td><img width={'50px'} height={'50px'} src={product?.thumbnail} alt="" /></td>
                   <td>
                     <div className="d-flex">
-                      <button className="btn fs-3 fw-bold shadow-none border-0">-</button>
-                      <input style={{width:'30px' ,height:'30px'}} type="text" className="form-control border mt-3 text-center" readOnly value={10} />
-                      <button className="btn fs-3 fw-bold shadow-none border-0 ">+</button>
+                      <button onClick={()=>handleDecrementCart(product)}  className="btn fs-3 fw-bold shadow-none border-0">-</button>
+                      <input style={{width:'30px' ,height:'30px'}} type="text" className="form-control border mt-3 text-center" readOnly value={product?.quantity} />
+                      <button onClick={()=>dispatch(incrementCartItem(product))} className="btn fs-3 fw-bold shadow-none border-0 ">+</button>
                       
                     </div>
                   </td>
-                  <td>$ 200</td>
+                  <td>$ {product?.totalPrice}</td>
                   <td>
-                    <button className="btn text-danger shadow-none border-0"><FontAwesomeIcon icon={faTrash} /></button>
+                    <button onClick={()=>dispatch(removeCartItem(product?.id))} className="btn text-danger shadow-none border-0"><FontAwesomeIcon icon={faTrash} /></button>
                   </td>
                 </tr>
+                  ))
+                }
               </tbody>
             </table>
+
+            {/* 2 buttons */}
+            <div className="float-end mt-3">
+              <button onClick={()=>dispatch(emptyCart())} className='btn btn-danger me-2'>EMPTY CART</button>
+              <Link to={'/cart'} className='btn text-white' style={{backgroundColor:'teal'}}>SHOP MORE</Link>
+            </div>
+
+
           </div>
           <div className="col-md-4">
             <div className="border rounded p-4">
-              <h3 className='fw-bold'>Total Amount : <span className='text-danger'>$19.99</span></h3>
+              <h3 className='fw-bold'>Total Amount : <span className='text-danger'>$ {sum}</span></h3>
               <hr />
               <div className="d-grid mt-2">
-                <button className="btn btn-success">CHECK OUT</button>
+                <button onClick={checkout} className="btn btn-success">CHECK OUT</button>
               </div>
             </div>
           </div>
         </div>
       </div>
+        :
+        <div className='d-flex justify-content-center align-items-center flex-column' style={{height:'80vh'}}>
+          <img className='w-25' src="https://assets-v2.lottiefiles.com/a/0953d504-117d-11ee-aa49-1f149204cb5f/9uZcoEJaoF.gif" alt="empty" />
+          <h3> Your Cart is Empty</h3>
+          <Link to={'/'} className='btn text-white' style={{backgroundColor:'teal'}}>Add More</Link>
+        </div>
+
+      }
     </div>
     </>
   )
